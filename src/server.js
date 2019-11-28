@@ -10,11 +10,11 @@ const Database = require('sqlite-async');
 const main = async () => {
 	let db;
 	try {
-        db = await Database.open(":memory:");
+        db = await Database.open("test.db");
     } catch (error) {
         throw Error('can not access sqlite database');
     }
-    try {
+    /*try {
         await db.run(`
 			CREATE TABLE user
 			(
@@ -37,16 +37,28 @@ const main = async () => {
         );
     } catch (error) {
         throw Error('Could not insert new user');
-	}
-
+	}*/
     polka()
         .get('/', async (req, res) => {
-            const {firstName, lastName} = 
-            await db.get(`SELECT firstName, lastName 
+            let allRows = 
+            await db.all(`SELECT firstName, lastName 
                          FROM user 
                          WHERE firstName LIKE ?`,
-                         "%Michael%");
-            res.end(`<h1>hello ${firstName} ${lastName} </h1>`);
+                         "%Michael%", 
+                         function(err, data){
+                             console.log(data);
+                            if(err != null){
+                                allRows = err;
+                            } else {
+                                allRows = data;
+                            }
+                         });
+            console.log('all',allRows);
+            let html = '';
+            allRows.forEach(row => {
+                html+=`<p>hello ${row.firstName} ${row.lastName}</p>`;
+            });
+            res.end(html); 
 		})
 		.use(
 			compression({ threshold: 0 }),
